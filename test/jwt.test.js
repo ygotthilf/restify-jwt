@@ -1,7 +1,7 @@
 var jwt = require('jsonwebtoken');
 var assert = require('assert');
 
-var expressjwt = require('../lib');
+var restifyjwt = require('../lib');
 
 describe('failure tests', function () {
   var req = {};
@@ -9,7 +9,7 @@ describe('failure tests', function () {
 
   it('should throw if options not sent', function() {
     try {
-      expressjwt();
+      restifyjwt();
     } catch(e) {
       assert.ok(e);
       assert.equal(e.message, 'secret should be set');
@@ -17,15 +17,15 @@ describe('failure tests', function () {
   });
 
   it('should throw if no authorization header and credentials are required', function() {
-    expressjwt({secret: 'shhhh', credentialsRequired: true})(req, res, function(err) {
+    restifyjwt({secret: 'shhhh', credentialsRequired: true})(req, res, function(err) {
       assert.ok(err);
-      assert.equal(err.code, 'credentials_required');
+      assert.equal(err.message, 'No Authorization header was found');
     });
   });
 
   it('support unless skip', function() {
     req.originalUrl = '/index.html';
-    expressjwt({secret: 'shhhh'}).unless({path: '/index.html'})(req, res, function(err) {
+    restifyjwt({secret: 'shhhh'}).unless({path: '/index.html'})(req, res, function(err) {
       assert.ok(!err);
     });
   });
@@ -36,7 +36,7 @@ describe('failure tests', function () {
     corsReq.headers = {
       'access-control-request-headers': 'sasa, sras,  authorization'
     };
-    expressjwt({secret: 'shhhh'})(corsReq, res, function(err) {
+    restifyjwt({secret: 'shhhh'})(corsReq, res, function(err) {
       assert.ok(!err);
     });
   });
@@ -44,18 +44,18 @@ describe('failure tests', function () {
   it('should throw if authorization header is malformed', function() {
     req.headers = {};
     req.headers.authorization = 'wrong';
-    expressjwt({secret: 'shhhh'})(req, res, function(err) {
+    restifyjwt({secret: 'shhhh'})(req, res, function(err) {
       assert.ok(err);
-      assert.equal(err.code, 'credentials_bad_format');
+      assert.equal(err.message, 'Format is Authorization: Bearer [token]');
     });
   });
 
   it('should throw if authorization header is not well-formatted jwt', function() {
     req.headers = {};
     req.headers.authorization = 'Bearer wrongjwt';
-    expressjwt({secret: 'shhhh'})(req, res, function(err) {
+    restifyjwt({secret: 'shhhh'})(req, res, function(err) {
       assert.ok(err);
-      assert.equal(err.code, 'invalid_token');
+      assert.equal(err.body.code, 'InvalidCredentials');
     });
   });
 
@@ -65,10 +65,10 @@ describe('failure tests', function () {
 
     req.headers = {};
     req.headers.authorization = 'Bearer ' + token;
-    expressjwt({secret: 'different-shhhh'})(req, res, function(err) {
+    restifyjwt({secret: 'different-shhhh'})(req, res, function(err) {
       assert.ok(err);
-      assert.equal(err.code, 'invalid_token');
-      assert.equal(err.message, 'invalid signature');
+      assert.equal(err.body.code, 'InvalidCredentials');
+      assert.equal(err.we_cause.message, 'invalid signature');
     });
   });
 
@@ -78,10 +78,10 @@ describe('failure tests', function () {
 
     req.headers = {};
     req.headers.authorization = 'Bearer ' + token;
-    expressjwt({secret: 'shhhhhh', audience: 'not-expected-audience'})(req, res, function(err) {
+    restifyjwt({secret: 'shhhhhh', audience: 'not-expected-audience'})(req, res, function(err) {
       assert.ok(err);
-      assert.equal(err.code, 'invalid_token');
-      assert.equal(err.message, 'jwt audience invalid. expected: expected-audience');
+      assert.equal(err.body.code, 'InvalidCredentials');
+      assert.equal(err.we_cause.message, 'jwt audience invalid. expected: expected-audience');
     });
   });
 
@@ -91,10 +91,10 @@ describe('failure tests', function () {
 
     req.headers = {};
     req.headers.authorization = 'Bearer ' + token;
-    expressjwt({secret: 'shhhhhh'})(req, res, function(err) {
+    restifyjwt({secret: 'shhhhhh'})(req, res, function(err) {
       assert.ok(err);
-      assert.equal(err.code, 'invalid_token');
-      assert.equal(err.message, 'jwt expired');
+      assert.equal(err.body.code, 'InvalidCredentials');
+      assert.equal(err.we_cause.message, 'jwt expired');
     });
   });
 
@@ -104,10 +104,10 @@ describe('failure tests', function () {
 
     req.headers = {};
     req.headers.authorization = 'Bearer ' + token;
-    expressjwt({secret: 'shhhhhh', issuer: 'http://wrong'})(req, res, function(err) {
+    restifyjwt({secret: 'shhhhhh', issuer: 'http://wrong'})(req, res, function(err) {
       assert.ok(err);
-      assert.equal(err.code, 'invalid_token');
-      assert.equal(err.message, 'jwt issuer invalid. expected: http://foo');
+      assert.equal(err.body.code, 'InvalidCredentials');
+      assert.equal(err.we_cause.message, 'jwt issuer invalid. expected: http://foo');
     });
   });
 
@@ -124,7 +124,7 @@ describe('work tests', function () {
 
     req.headers = {};
     req.headers.authorization = 'Bearer ' + token;
-    expressjwt({secret: secret})(req, res, function() {
+    restifyjwt({secret: secret})(req, res, function() {
       assert.equal('bar', req.user.foo);
     });
   });
@@ -135,14 +135,14 @@ describe('work tests', function () {
 
     req.headers = {};
     req.headers.authorization = 'Bearer ' + token;
-    expressjwt({secret: secret, userProperty: 'auth'})(req, res, function() {
+    restifyjwt({secret: secret, userProperty: 'auth'})(req, res, function() {
       assert.equal('bar', req.auth.foo);
     });
   });
 
   it('should work if no authorization header and credentials are not required', function() {
     req = {};
-    expressjwt({secret: 'shhhh', credentialsRequired: false})(req, res, function(err) {
+    restifyjwt({secret: 'shhhh', credentialsRequired: false})(req, res, function(err) {
       assert(typeof err === 'undefined');
     });
   });
