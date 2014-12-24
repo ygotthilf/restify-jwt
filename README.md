@@ -2,9 +2,7 @@
 
 [Restify](http://mcavage.me/node-restify/) middleware that validates JsonWebTokens and sets `req.user`.
 
-This module lets you authenticate HTTP requests using JWT tokens in your Node.js
-applications.  JWTs are typically used protect API endpoints, and are
-often issued using OpenID Connect.
+This module lets you authenticate HTTP requests using JWT tokens in your restify applications.
 
 ## Install
 
