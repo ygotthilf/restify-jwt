@@ -1,8 +1,6 @@
-# express-jwt
+# restify-jwt
 
-[![Build](https://travis-ci.org/auth0/express-jwt.png)](http://travis-ci.org/auth0/express-jwt)
-
-Middleware that validates JsonWebTokens and sets `req.user`.
+[Restify](http://mcavage.me/node-restify/) middleware that validates JsonWebTokens and sets `req.user`.
 
 This module lets you authenticate HTTP requests using JWT tokens in your Node.js
 applications.  JWTs are typically used protect API endpoints, and are
@@ -10,7 +8,7 @@ often issued using OpenID Connect.
 
 ## Install
 
-    $ npm install express-jwt
+    $ npm install restify-jwt
 
 ## Usage
 
@@ -21,7 +19,7 @@ to be used by later middleware for authorization and access control.
 For example,
 
 ```javascript
-var jwt = require('express-jwt');
+var jwt = require('restify-jwt');
 
 app.get('/protected',
   jwt({secret: 'shhhhhhared-secret'}),
@@ -62,35 +60,13 @@ By default, the decoded token is attached to `req.user` but can be configured wi
 jwt({ secret: publicKey, userProperty: 'auth' });
 ```
 
-
-### Error handling
-
-The default behavior is to throw an error when the token is invalid, so you can add your custom logic to manage unauthorized access as follows:
-
-
-```javascript
-app.use(function (err, req, res, next) {
-  if (err.name === 'UnauthorizedError') {
-    res.send(401, 'invalid token...');
-  }
-});
-```
-
 You might want to use this module to identify registered users without preventing unregistered clients to access to some data, you
 can do it using the option _credentialsRequired_:
 
-    app.use(jwt({ 
+    app.use(jwt({
       secret: 'hello world !',
       credentialsRequired: false
     }));
-
-## Related Modules
-
-- [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) — JSON Web Token sign and verification
-
-## Issue Reporting
-
-If you have found a bug or if you have a feature request, please report them at this repository issues section. Please do not report security vulnerabilities on the public GitHub issue tracker. The [Responsible Disclosure Program](https://auth0.com/whitehat) details the procedure for disclosing security issues.
 
 ## Tests
 
@@ -99,23 +75,8 @@ If you have found a bug or if you have a feature request, please report them at 
 
 ## Credits
 
-- @jfromaniello ([20 contributions](https://github.com/auth0/express-jwt/commits?author=jfromaniello))
-- @woloski ([16 contributions](https://github.com/auth0/express-jwt/commits?author=woloski))
-- @aaronogle ([3 contributions](https://github.com/auth0/express-jwt/commits?author=aaronogle))
-- @mck- ([3 contributions](https://github.com/auth0/express-jwt/commits?author=mck-))
-- @CLevasseur ([2 contributions](https://github.com/auth0/express-jwt/commits?author=CLevasseur))
-- @wiherek5 ([1 contributions](https://github.com/auth0/express-jwt/commits?author=wiherek5))
-- @davis ([1 contributions](https://github.com/auth0/express-jwt/commits?author=davis))
-- @godeatgod ([1 contributions](https://github.com/auth0/express-jwt/commits?author=godeatgod))
-- @nkcmr ([1 contributions](https://github.com/auth0/express-jwt/commits?author=nkcmr))
-- @philosoralphter ([1 contributions](https://github.com/auth0/express-jwt/commits?author=philosoralphter))
-- @iamsebastian ([1 contributions](https://github.com/auth0/express-jwt/commits?author=iamsebastian))
-- @tonytamps ([1 contributions](https://github.com/auth0/express-jwt/commits?author=tonytamps))
-- @dannyrscott ([1 contributions](https://github.com/auth0/express-jwt/commits?author=dannyrscott))
-- @dschenkelman ([1 contributions](https://github.com/auth0/express-jwt/commits?author=dschenkelman))
+Forked from [auth0/express-jwt](https://github.com/auth0/express-jwt). The major difference is that restify-jwt tries to use built in restify errors wherever possible.
 
 ## License
 
 [The MIT License](http://opensource.org/licenses/MIT)
-
-Copyright (c) 2013 Auth0 <[http://auth0.com](http://auth0.com)>
