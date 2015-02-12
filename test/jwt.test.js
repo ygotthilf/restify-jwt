@@ -2,6 +2,7 @@ var jwt = require('jsonwebtoken');
 var assert = require('assert');
 
 var restifyjwt = require('../lib');
+var restify = require('restify');
 
 describe('failure tests', function () {
   var req = {};
@@ -19,7 +20,7 @@ describe('failure tests', function () {
   it('should throw if no authorization header and credentials are required', function() {
     restifyjwt({secret: 'shhhh', credentialsRequired: true})(req, res, function(err) {
       assert.ok(err);
-      assert.equal(err.message, 'No Authorization header was found');
+      assert.equal(err.message, 'No authorization token was found');
     });
   });
 
@@ -111,6 +112,23 @@ describe('failure tests', function () {
     });
   });
 
+  it('should use errors thrown from custom getToken function', function() {
+    var secret = 'shhhhhh';
+    var token = jwt.sign({foo: 'bar'}, secret);
+
+    function getTokenThatThrowsError() {
+      throw new restify.errors.InvalidCredentialsError('Invalid token!');
+    }
+
+    restifyjwt({
+      secret: 'shhhhhh',
+      getToken: getTokenThatThrowsError
+    })(req, res, function(err) {
+      assert.ok(err);
+      assert.equal(err.message, 'Invalid token!');
+    });
+  });
+
 
 });
 
@@ -144,6 +162,45 @@ describe('work tests', function () {
     req = {};
     restifyjwt({secret: 'shhhh', credentialsRequired: false})(req, res, function(err) {
       assert(typeof err === 'undefined');
+    });
+  });
+
+  it('should work if token is expired and credentials are not required', function() {
+    var secret = 'shhhhhh';
+    var token = jwt.sign({foo: 'bar', exp: 1382412921}, secret);
+
+    req.headers = {};
+    req.headers.authorization = 'Bearer ' + token;
+    restifyjwt({ secret: secret, credentialsRequired: false })(req, res, function(err) {
+      assert(typeof err === 'undefined');
+      assert(typeof req.user === 'undefined')
+    });
+  });
+
+  it('should not work if no authorization header', function() {
+    req = {};
+    restifyjwt({ secret: 'shhhh' })(req, res, function(err) {
+      assert(typeof err !== 'undefined');
+    });
+  });
+
+  it('should work with a custom getToken function', function() {
+    var secret = 'shhhhhh';
+    var token = jwt.sign({foo: 'bar'}, secret);
+
+    req.headers = {};
+    req.query = {};
+    req.query.token = token;
+
+    function getTokenFromQuery(req) {
+      return req.query.token;
+    }
+
+    restifyjwt({
+      secret: secret,
+      getToken: getTokenFromQuery
+    })(req, res, function() {
+      assert.equal('bar', req.user.foo);
     });
   });
 
