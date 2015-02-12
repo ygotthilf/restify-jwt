@@ -2,6 +2,7 @@ var jwt = require('jsonwebtoken');
 var assert = require('assert');
 
 var restifyjwt = require('../lib');
+var restify = require('restify');
 
 describe('failure tests', function () {
   var req = {};
@@ -19,7 +20,7 @@ describe('failure tests', function () {
   it('should throw if no authorization header and credentials are required', function() {
     restifyjwt({secret: 'shhhh', credentialsRequired: true})(req, res, function(err) {
       assert.ok(err);
-      assert.equal(err.message, 'No Authorization header was found');
+      assert.equal(err.message, 'No authorization token was found');
     });
   });
 
@@ -116,7 +117,7 @@ describe('failure tests', function () {
     var token = jwt.sign({foo: 'bar'}, secret);
 
     function getTokenThatThrowsError() {
-      throw new UnauthorizedError('invalid_token', { message: 'Invalid token!' });
+      throw new restify.errors.InvalidCredentialsError('Invalid token!');
     }
 
     restifyjwt({
@@ -124,7 +125,6 @@ describe('failure tests', function () {
       getToken: getTokenThatThrowsError
     })(req, res, function(err) {
       assert.ok(err);
-      assert.equal(err.code, 'invalid_token');
       assert.equal(err.message, 'Invalid token!');
     });
   });
