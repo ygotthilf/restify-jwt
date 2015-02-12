@@ -79,4 +79,4 @@ Forked from [auth0/express-jwt](https://github.com/auth0/express-jwt). The major
 
 ## License
 
-[The MIT License](http://opensource.org/licenses/MIT)
+This project is licensed under the MIT license. See the [LICENSE](LICENSE.txt) file for more info.

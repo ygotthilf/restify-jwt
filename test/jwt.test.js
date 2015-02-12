@@ -111,6 +111,24 @@ describe('failure tests', function () {
     });
   });
 
+  it('should use errors thrown from custom getToken function', function() {
+    var secret = 'shhhhhh';
+    var token = jwt.sign({foo: 'bar'}, secret);
+
+    function getTokenThatThrowsError() {
+      throw new UnauthorizedError('invalid_token', { message: 'Invalid token!' });
+    }
+
+    restifyjwt({
+      secret: 'shhhhhh',
+      getToken: getTokenThatThrowsError
+    })(req, res, function(err) {
+      assert.ok(err);
+      assert.equal(err.code, 'invalid_token');
+      assert.equal(err.message, 'Invalid token!');
+    });
+  });
+
 
 });
 
@@ -144,6 +162,45 @@ describe('work tests', function () {
     req = {};
     restifyjwt({secret: 'shhhh', credentialsRequired: false})(req, res, function(err) {
       assert(typeof err === 'undefined');
+    });
+  });
+
+  it('should work if token is expired and credentials are not required', function() {
+    var secret = 'shhhhhh';
+    var token = jwt.sign({foo: 'bar', exp: 1382412921}, secret);
+
+    req.headers = {};
+    req.headers.authorization = 'Bearer ' + token;
+    restifyjwt({ secret: secret, credentialsRequired: false })(req, res, function(err) {
+      assert(typeof err === 'undefined');
+      assert(typeof req.user === 'undefined')
+    });
+  });
+
+  it('should not work if no authorization header', function() {
+    req = {};
+    restifyjwt({ secret: 'shhhh' })(req, res, function(err) {
+      assert(typeof err !== 'undefined');
+    });
+  });
+
+  it('should work with a custom getToken function', function() {
+    var secret = 'shhhhhh';
+    var token = jwt.sign({foo: 'bar'}, secret);
+
+    req.headers = {};
+    req.query = {};
+    req.query.token = token;
+
+    function getTokenFromQuery(req) {
+      return req.query.token;
+    }
+
+    restifyjwt({
+      secret: secret,
+      getToken: getTokenFromQuery
+    })(req, res, function() {
+      assert.equal('bar', req.user.foo);
     });
   });
 
